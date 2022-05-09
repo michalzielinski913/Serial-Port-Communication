@@ -1,5 +1,8 @@
 
 from PyQt5 import QtCore, QtGui, QtWidgets
+
+
+
 class App:
     '''
     Controller class of the project
@@ -15,6 +18,7 @@ class App:
         self._main_window_set_up(self.MainWindow)
         self.MainWindow.show()
         self.app.exec_()
+        self.connection_window = ConnectionWindow()
 
     def _main_window_set_up(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
@@ -67,7 +71,10 @@ class App:
         self.save_button.setText(_translate("MainWindow", "Save"))
         self.clear_button.setText(_translate("MainWindow", "Clear"))
         self.menuConnection.setTitle(_translate("MainWindow", "Connection"))
-        self.menuConnection.addAction('Set up connection', self.connect_test)
+        self.menuConnection.addAction('Set up connection', self._open_connection_window)
+
+    def _open_connection_window(self):
+        self.connection_window.show()
 
     def connect_test(self):
         print("test")
