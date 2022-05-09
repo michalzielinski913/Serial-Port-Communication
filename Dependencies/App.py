@@ -1,6 +1,9 @@
-
+import serial
 from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtCore import QThread
 
+from Dependencies.ConnectionWindow import ConnectionWindow
+from Dependencies.Worker import Worker
 
 
 class App:
@@ -11,14 +14,16 @@ class App:
         '''
         Class constructor
         '''
-
+        self.serial=None
         import sys
         self.app=QtWidgets.QApplication(sys.argv)
         self.MainWindow = QtWidgets.QMainWindow()
         self._main_window_set_up(self.MainWindow)
         self.MainWindow.show()
         self.app.exec_()
-        self.connection_window = ConnectionWindow()
+        self.connection_window = None
+
+
 
     def _main_window_set_up(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
@@ -58,7 +63,6 @@ class App:
         self.statusbar.setObjectName("statusbar")
         MainWindow.setStatusBar(self.statusbar)
         self.menubar.addAction(self.menuConnection.menuAction())
-
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
@@ -71,10 +75,50 @@ class App:
         self.save_button.setText(_translate("MainWindow", "Save"))
         self.clear_button.setText(_translate("MainWindow", "Clear"))
         self.menuConnection.setTitle(_translate("MainWindow", "Connection"))
-        self.menuConnection.addAction('Set up connection', self._open_connection_window)
+        self.send_button.clicked.connect(self.send_to_serial)
 
+        self.menuConnection.addAction('Set up connection', self._open_connection_window)
     def _open_connection_window(self):
+        self.connection_window=QtWidgets.QMainWindow()
+        self.connection_ui=ConnectionWindow()
+        self.connection_ui.setApp(self)
+        self.connection_ui.setupUi(self.connection_window)
         self.connection_window.show()
 
     def connect_test(self):
         print("test")
+
+    def set_output(self, string):
+        self.output_widget.setPlainText("test")
+
+    def send_to_serial(self):
+        if self.serial is not None:
+            self.serial.write(self.input_widget.toPlainText().encode())
+
+    def append_output(self, value):
+        self.output_widget.appendPlainText(str(value))
+
+    def setup_connection(self, values):
+        port=values[0]
+        baud=int(values[1])
+        data_field=int(values[2])
+        parity=values[3]
+        if parity=='Even':
+            par=serial.PARITY_EVEN
+        elif parity=='Odd':
+            par=serial.PARITY_ODD
+        else:
+            par=serial.PARITY_NONE
+        stop=int(values[4])
+        self.serial=serial.Serial(port, baudrate=baud)
+        self.thread=QThread()
+        self.worker=Worker()
+        self.worker.set_serial_and_window(self.serial, self)
+        self.worker.moveToThread(self.thread)
+        self.thread.started.connect(self.worker.run)
+        self.worker.finished.connect(self.thread.quit)
+        self.worker.finished.connect(self.worker.deleteLater)
+        self.thread.finished.connect(self.thread.deleteLater)
+        self.worker.progress.connect(self.append_output)
+        self.thread.start()
+

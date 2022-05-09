@@ -1,5 +1,7 @@
+import serial
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel, QVBoxLayout, QWidget
+from PyQt5.QtCore import QCoreApplication
+from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel, QVBoxLayout, QWidget, QDialogButtonBox
 
 from Dependencies.serial_functions import get_com_ports
 
@@ -13,13 +15,8 @@ class ConnectionWindow(object):
         self.data_fields=["7", "8"]
         self.parity_control=["Even", "Odd", "None"]
         self.stop_bits=["1", "2"]
-        import sys
-        self.app=QtWidgets.QApplication(sys.argv)
-        self.MainWindow = QtWidgets.QMainWindow()
-        self.setupUi(self.MainWindow)
-        self.MainWindow.show()
-        self.app.exec_()
     def setupUi(self, COMSetup):
+        self.window=COMSetup
         COMSetup.setObjectName("COMSetup")
         COMSetup.resize(300, 399)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
@@ -33,6 +30,9 @@ class ConnectionWindow(object):
         self.buttonBox.setGeometry(QtCore.QRect(30, 220, 156, 23))
         self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel|QtWidgets.QDialogButtonBox.Ok)
         self.buttonBox.setObjectName("buttonBox")
+        self.buttonBox.button(QDialogButtonBox.Ok).clicked.connect(self.close_window)
+        self.buttonBox.button(QDialogButtonBox.Cancel).clicked.connect(COMSetup.close)
+
         self.comboBox = QtWidgets.QComboBox(self.centralwidget)
         self.comboBox.setGeometry(QtCore.QRect(70, 40, 69, 22))
         self.comboBox.setObjectName("comboBox")
@@ -111,3 +111,15 @@ class ConnectionWindow(object):
 
     def get_com_port(self):
         return self.comboBox.currentText()
+
+    def setApp(self, app):
+        self.app=app
+        #self.app.connect_test()
+
+    def close_window(self):
+        items=[self.comboBox.currentText(), self.comboBox_2.currentText(), self.comboBox_3.currentText(), self.comboBox_4.currentText(), self.comboBox_5.currentText()]
+        self.app.setup_connection((items))
+
+        self.window.close()
+
+

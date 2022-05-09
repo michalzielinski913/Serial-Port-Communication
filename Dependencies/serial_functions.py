@@ -6,6 +6,3 @@ def get_com_ports():
     for port, desc, hwid in sorted(ports):
         devices.append(port)
     return devices
-
-print(get_com_ports())
-get_com_ports()
