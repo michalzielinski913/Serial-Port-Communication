@@ -1,17 +1,26 @@
 from PyQt5.QtCore import QObject, QThread, pyqtSignal
 import time
+
+from serial import PortNotOpenError
+
+
 class Worker(QObject):
     finished = pyqtSignal()
     progress = pyqtSignal(str)
 
-    def set_serial_and_window(self, serial, window):
+    def set_serial(self, serial):
         self.serial=serial
-        self.window=window
 
     def run(self):
         """Long-running task."""
         while True:
-            result=self.serial.readline()
+            try:
+                result=self.serial.read()
+                print(result)
+                self.progress.emit(result.decode())
+            except AttributeError:
+                pass
+            except PortNotOpenError:
+                pass
 
-            self.progress.emit(result.decode("utf-8") )
         self.finished.emit()

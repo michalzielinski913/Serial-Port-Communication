@@ -93,27 +93,43 @@ class App:
 
     def send_to_serial(self):
         if self.serial is not None:
+            print(self.input_widget.toPlainText().encode("utf-8"))
             self.serial.write(self.input_widget.toPlainText().encode())
 
     def append_output(self, value):
-        self.output_widget.appendPlainText(str(value))
+        self.output_widget.insertPlainText(str(value))
 
     def setup_connection(self, values):
         port=values[0]
         baud=int(values[1])
         data_field=int(values[2])
+        if data_field==7:
+            data_field=serial.SEVENBITS
+        else:
+            data_field=serial.EIGHTBITS
+
         parity=values[3]
+        par=None
         if parity=='Even':
             par=serial.PARITY_EVEN
         elif parity=='Odd':
             par=serial.PARITY_ODD
         else:
             par=serial.PARITY_NONE
-        stop=int(values[4])
-        self.serial=serial.Serial(port, baudrate=baud)
+        stop=None
+        if int(values[4]) == 1:
+            stop = serial.STOPBITS_ONE
+        else:
+            stop = serial.STOPBITS_TWO
+        if self.serial is not None:
+            if self.serial.is_open:
+                self.serial.close()
+
+        self.serial=serial.Serial(port, baudrate=baud, parity=par, stopbits=stop,
+                                  bytesize=data_field)
         self.thread=QThread()
         self.worker=Worker()
-        self.worker.set_serial_and_window(self.serial, self)
+        self.worker.set_serial(self.serial)
         self.worker.moveToThread(self.thread)
         self.thread.started.connect(self.worker.run)
         self.worker.finished.connect(self.thread.quit)
