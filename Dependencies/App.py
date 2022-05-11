@@ -1,20 +1,23 @@
 import serial
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import QThread
-
+from PyQt5.QtWidgets import *
+from PyQt5.QtCore import *
 from Dependencies.ConnectionWindow import ConnectionWindow
 from Dependencies.Worker import Worker
 
 
-class App:
+class App(QObject):
     '''
     Controller class of the project
     '''
     def __init__(self):
+
         '''
         Class constructor
         '''
         self.serial=None
+        super().__init__()
         import sys
         self.app=QtWidgets.QApplication(sys.argv)
         self.MainWindow = QtWidgets.QMainWindow()
@@ -22,7 +25,7 @@ class App:
         self.MainWindow.show()
         self.app.exec_()
         self.connection_window = None
-
+        self.terminator="\r\n"
 
 
     def _main_window_set_up(self, MainWindow):
@@ -58,24 +61,79 @@ class App:
         self.menubar.setObjectName("menubar")
         self.menuConnection = QtWidgets.QMenu(self.menubar)
         self.menuConnection.setObjectName("menuConnection")
+        self.menuTerminator = QtWidgets.QMenu(self.menubar)
+        self.menuTerminator.setObjectName("menuTerminator")
+        self.menuStandard = QtWidgets.QMenu(self.menuTerminator)
+        self.menuStandard.setObjectName("menuStandard")
         MainWindow.setMenuBar(self.menubar)
         self.statusbar = QtWidgets.QStatusBar(MainWindow)
         self.statusbar.setObjectName("statusbar")
         MainWindow.setStatusBar(self.statusbar)
+        self.actionNone = QtWidgets.QAction(MainWindow)
+        self.actionNone.setCheckable(True)
+        self.actionNone.setObjectName("actionNone")
+        self.actionCustom = QtWidgets.QAction(MainWindow)
+        self.actionCustom.setCheckable(True)
+        self.actionCustom.setObjectName("actionCustom")
+        self.actionCR = QtWidgets.QAction(MainWindow)
+        self.actionCR.setCheckable(True)
+        self.actionCR.setObjectName("actionCR")
+        self.actionLf = QtWidgets.QAction(MainWindow)
+        self.actionLf.setCheckable(True)
+        self.actionLf.setObjectName("actionLf")
+        self.actionCR_LF = QtWidgets.QAction(MainWindow)
+        self.actionCR_LF.setCheckable(True)
+        self.actionCR_LF.setChecked(True)
+        self.actionCR_LF.setObjectName("actionCR_LF")
+        self.menuStandard.addAction(self.actionCR)
+        self.menuStandard.addAction(self.actionLf)
+        self.menuStandard.addAction(self.actionCR_LF)
+        self.menuTerminator.addAction(self.actionNone)
+        self.menuTerminator.addAction(self.menuStandard.menuAction())
+        self.menuTerminator.addSeparator()
+        self.menuTerminator.addAction(self.actionCustom)
         self.menubar.addAction(self.menuConnection.menuAction())
+        self.menubar.addAction(self.menuTerminator.menuAction())
+
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
+
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "CSI Project"))
+        MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
         self.label.setText(_translate("MainWindow", "Output:"))
         self.label_2.setText(_translate("MainWindow", "Input:"))
         self.send_button.setText(_translate("MainWindow", "Send"))
         self.save_button.setText(_translate("MainWindow", "Save"))
         self.clear_button.setText(_translate("MainWindow", "Clear"))
         self.menuConnection.setTitle(_translate("MainWindow", "Connection"))
-        self.send_button.clicked.connect(self.send_to_serial)
+        self.menuTerminator.setTitle(_translate("MainWindow", "Terminator"))
+        self.menuStandard.setTitle(_translate("MainWindow", "Standard"))
+
+        self.actionNone.setText(_translate("MainWindow", "None"))
+        self.actionCustom.setText(_translate("MainWindow", "Custom"))
+        self.actionCR.setText(_translate("MainWindow", "CR"))
+        self.actionLf.setText(_translate("MainWindow", "LF"))
+        self.actionCR_LF.setText(_translate("MainWindow", "CR-LF"))
+
+
+        self.terminator_group=QActionGroup(self)
+        self.terminator_group.addAction(self.actionCR)
+        self.actionCR.triggered.connect(self.update_terminator)
+        self.terminator_group.addAction(self.actionCR_LF)
+        self.actionCR_LF.triggered.connect(self.update_terminator)
+
+        self.terminator_group.addAction(self.actionLf)
+        self.actionLf.triggered.connect(self.update_terminator)
+
+        self.terminator_group.addAction(self.actionNone)
+        self.actionNone.triggered.connect(self.update_terminator)
+
+        self.terminator_group.addAction(self.actionCustom)
+        self.actionCustom.triggered.connect(self.update_terminator)
+
+        self.terminator_group.setExclusive(True)
 
         self.menuConnection.addAction('Set up connection', self._open_connection_window)
     def _open_connection_window(self):
@@ -85,6 +143,16 @@ class App:
         self.connection_ui.setupUi(self.connection_window)
         self.connection_window.show()
 
+    def update_terminator(self):
+        if self.actionCR.isChecked():
+            self.terminator="\r"
+        if self.actionNone.isChecked():
+            self.terminator=""
+        if self.actionLf.isChecked():
+            self.terminator="\n"
+        if self.actionCR_LF.isChecked():
+            self.terminator="\r\n"
+        print(self.terminator.encode())
     def connect_test(self):
         print("test")
 
@@ -93,7 +161,7 @@ class App:
 
     def send_to_serial(self):
         if self.serial is not None:
-            print(self.input_widget.toPlainText().encode("utf-8"))
+            #print(self.input_widget.toPlainText().encode("utf-8"))
             self.serial.write(self.input_widget.toPlainText().encode())
 
     def append_output(self, value):
@@ -126,7 +194,8 @@ class App:
                 self.serial.close()
 
         self.serial=serial.Serial(port, baudrate=baud, parity=par, stopbits=stop,
-                                  bytesize=data_field)
+                                  bytesize=data_field, dsrdtr=values[5],
+                                  rtscts=values[6], xonxoff=values[7])
         self.thread=QThread()
         self.worker=Worker()
         self.worker.set_serial(self.serial)

@@ -16,7 +16,6 @@ class Worker(QObject):
         while True:
             try:
                 result=self.serial.read()
-                print(result)
                 self.progress.emit(result.decode())
             except AttributeError:
                 pass

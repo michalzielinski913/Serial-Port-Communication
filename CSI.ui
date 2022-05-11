@@ -117,9 +117,70 @@
      <string>Connection</string>
     </property>
    </widget>
+   <widget class="QMenu" name="menuTerminator">
+    <property name="title">
+     <string>Terminator</string>
+    </property>
+    <widget class="QMenu" name="menuStandard">
+     <property name="title">
+      <string>Standard</string>
+     </property>
+     <addaction name="actionCR"/>
+     <addaction name="actionLf"/>
+     <addaction name="actionCR_LF"/>
+    </widget>
+    <addaction name="actionNone"/>
+    <addaction name="menuStandard"/>
+    <addaction name="separator"/>
+    <addaction name="actionCustom"/>
+   </widget>
    <addaction name="menuConnection"/>
+   <addaction name="menuTerminator"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
+  <action name="actionNone">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>None</string>
+   </property>
+  </action>
+  <action name="actionCustom">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Custom</string>
+   </property>
+  </action>
+  <action name="actionCR">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>CR</string>
+   </property>
+  </action>
+  <action name="actionLf">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>LF</string>
+   </property>
+  </action>
+  <action name="actionCR_LF">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>CR-LF</string>
+   </property>
+  </action>
  </widget>
  <resources/>
  <connections/>
