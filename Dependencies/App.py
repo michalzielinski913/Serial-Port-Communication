@@ -1,9 +1,12 @@
+from datetime import datetime
+from time import sleep
 import serial
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import QThread
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from Dependencies.ConnectionWindow import ConnectionWindow
+from Dependencies.CustomNullWindow import CustomNullWindow
 from Dependencies.Worker import Worker
 
 
@@ -21,11 +24,12 @@ class App(QObject):
         import sys
         self.app=QtWidgets.QApplication(sys.argv)
         self.MainWindow = QtWidgets.QMainWindow()
+        self.terminator = "\r\n"
         self._main_window_set_up(self.MainWindow)
         self.MainWindow.show()
         self.app.exec_()
         self.connection_window = None
-        self.terminator="\r\n"
+
 
 
     def _main_window_set_up(self, MainWindow):
@@ -55,6 +59,15 @@ class App(QObject):
         self.clear_button = QtWidgets.QPushButton(self.centralwidget)
         self.clear_button.setGeometry(QtCore.QRect(380, 720, 75, 23))
         self.clear_button.setObjectName("clear_button")
+        self.Ping_button = QtWidgets.QPushButton(self.centralwidget)
+        self.Ping_button.setGeometry(QtCore.QRect(60, 370, 93, 28))
+        self.Ping_button.setObjectName("Ping_button")
+        self.label_3 = QtWidgets.QLabel(self.centralwidget)
+        self.label_3.setGeometry(QtCore.QRect(160, 380, 55, 16))
+        self.label_3.setObjectName("label_3")
+        self.time_label = QtWidgets.QLabel(self.centralwidget)
+        self.time_label.setGeometry(QtCore.QRect(210, 380, 1000, 16))
+        self.time_label.setObjectName("time_label")
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 600, 26))
@@ -117,6 +130,9 @@ class App(QObject):
         self.actionLf.setText(_translate("MainWindow", "LF"))
         self.actionCR_LF.setText(_translate("MainWindow", "CR-LF"))
 
+        self.Ping_button.setText(_translate("MainWindow", "PING"))
+        self.label_3.setText(_translate("MainWindow", "Time:"))
+        self.time_label.setText(_translate("MainWindow", "00:00:00"))
 
         self.terminator_group=QActionGroup(self)
         self.terminator_group.addAction(self.actionCR)
@@ -135,6 +151,9 @@ class App(QObject):
 
         self.terminator_group.setExclusive(True)
 
+        self.Ping_button.clicked.connect(self.ping_start)
+
+
         self.menuConnection.addAction('Set up connection', self._open_connection_window)
     def _open_connection_window(self):
         self.connection_window=QtWidgets.QMainWindow()
@@ -142,6 +161,14 @@ class App(QObject):
         self.connection_ui.setApp(self)
         self.connection_ui.setupUi(self.connection_window)
         self.connection_window.show()
+
+    def _open_custom_null_window(self):
+        self.null_window=QtWidgets.QMainWindow()
+        self.null_ui=CustomNullWindow()
+        self.null_ui.setApp(self)
+        self.null_ui.setupUi(self.null_window)
+        self.null_window.show()
+
 
     def update_terminator(self):
         if self.actionCR.isChecked():
@@ -152,6 +179,8 @@ class App(QObject):
             self.terminator="\n"
         if self.actionCR_LF.isChecked():
             self.terminator="\r\n"
+        if self.actionCustom.isChecked():
+            self._open_custom_null_window()
         print(self.terminator.encode())
     def connect_test(self):
         print("test")
@@ -207,3 +236,18 @@ class App(QObject):
         self.worker.progress.connect(self.append_output)
         self.thread.start()
 
+
+    def ping_start(self):
+        if self.serial is not None:
+            timestamp=datetime.now()
+            self.time_label.setText("Waiting")
+            self.time_label.repaint()
+            self.serial.write("Test msg".encode())
+
+            while self.serial.in_waiting==0:
+                print(self.serial.in_waiting)
+
+            elapsed=datetime.now()-timestamp
+            self.time_label.setText(str(elapsed))
+        else:
+            self.time_label.setText("No connection detected")
