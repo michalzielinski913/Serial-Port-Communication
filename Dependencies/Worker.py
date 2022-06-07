@@ -14,12 +14,8 @@ class Worker(QObject):
     def run(self):
         """Long-running task."""
         while True:
-            try:
                 result=self.serial.read()
                 self.progress.emit(result.decode())
-            except AttributeError:
-                pass
-            except PortNotOpenError:
-                pass
+
 
         self.finished.emit()

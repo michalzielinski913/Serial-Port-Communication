@@ -118,6 +118,7 @@ class App(QObject):
         self.label.setText(_translate("MainWindow", "Output:"))
         self.label_2.setText(_translate("MainWindow", "Input:"))
         self.send_button.setText(_translate("MainWindow", "Send"))
+        self.send_button.clicked.connect(self.send_to_serial)
         self.save_button.setText(_translate("MainWindow", "Save"))
         self.clear_button.setText(_translate("MainWindow", "Clear"))
         self.menuConnection.setTitle(_translate("MainWindow", "Connection"))
@@ -190,8 +191,9 @@ class App(QObject):
 
     def send_to_serial(self):
         if self.serial is not None:
-            #print(self.input_widget.toPlainText().encode("utf-8"))
-            self.serial.write(self.input_widget.toPlainText().encode())
+            payload=self.input_widget.toPlainText()+"{}".format(self.terminator)
+            self.serial.write(payload.encode())
+
 
     def append_output(self, value):
         self.output_widget.insertPlainText(str(value))
@@ -224,7 +226,7 @@ class App(QObject):
 
         self.serial=serial.Serial(port, baudrate=baud, parity=par, stopbits=stop,
                                   bytesize=data_field, dsrdtr=values[5],
-                                  rtscts=values[6], xonxoff=values[7])
+                                  rtscts=values[6], xonxoff=values[7], timeout=0.1)
         self.thread=QThread()
         self.worker=Worker()
         self.worker.set_serial(self.serial)
@@ -245,7 +247,7 @@ class App(QObject):
             self.serial.write("Test msg".encode())
 
             while self.serial.in_waiting==0:
-                print(self.serial.in_waiting)
+                pass
 
             elapsed=datetime.now()-timestamp
             self.time_label.setText(str(elapsed))
