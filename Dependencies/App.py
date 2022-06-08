@@ -59,6 +59,7 @@ class App(QObject):
         self.clear_button = QtWidgets.QPushButton(self.centralwidget)
         self.clear_button.setGeometry(QtCore.QRect(380, 720, 75, 23))
         self.clear_button.setObjectName("clear_button")
+        self.clear_button.clicked.connect(self.clear_output_box)
         self.Ping_button = QtWidgets.QPushButton(self.centralwidget)
         self.Ping_button.setGeometry(QtCore.QRect(60, 370, 93, 28))
         self.Ping_button.setObjectName("Ping_button")
@@ -220,23 +221,32 @@ class App(QObject):
             stop = serial.STOPBITS_ONE
         else:
             stop = serial.STOPBITS_TWO
-        if self.serial is not None:
-            if self.serial.is_open:
-                self.serial.close()
 
-        self.serial=serial.Serial(port, baudrate=baud, parity=par, stopbits=stop,
-                                  bytesize=data_field, dsrdtr=values[5],
-                                  rtscts=values[6], xonxoff=values[7], timeout=0.1)
-        self.thread=QThread()
-        self.worker=Worker()
-        self.worker.set_serial(self.serial)
-        self.worker.moveToThread(self.thread)
-        self.thread.started.connect(self.worker.run)
-        self.worker.finished.connect(self.thread.quit)
-        self.worker.finished.connect(self.worker.deleteLater)
-        self.thread.finished.connect(self.thread.deleteLater)
-        self.worker.progress.connect(self.append_output)
-        self.thread.start()
+        if self.serial is not None:
+            if port!=self.serial.port:
+                self.serial.port=port
+            self.serial.baudrate=baud
+            self.serial.parity=par
+            self.serial.stopbits=stop
+            self.serial.bytesize=data_field
+            self.serial.dsrdtr=values[5]
+            self.serial.rtscts=values[6]
+            self.serial.xonxoff=values[7]
+            self.serial.timeout=0.1
+        else:
+            self.serial=serial.Serial(port, baudrate=baud, parity=par, stopbits=stop,
+                                      bytesize=data_field, dsrdtr=values[5],
+                                      rtscts=values[6], xonxoff=values[7], timeout=0.1)
+            self.thread=QThread()
+            self.worker=Worker()
+            self.worker.set_serial(self.serial)
+            self.worker.moveToThread(self.thread)
+            self.thread.started.connect(self.worker.run)
+            self.worker.finished.connect(self.thread.quit)
+            self.worker.finished.connect(self.worker.deleteLater)
+            self.thread.finished.connect(self.thread.deleteLater)
+            self.worker.progress.connect(self.append_output)
+            self.thread.start()
 
 
     def ping_start(self):
@@ -253,3 +263,6 @@ class App(QObject):
             self.time_label.setText(str(elapsed))
         else:
             self.time_label.setText("No connection detected")
+
+    def clear_output_box(self):
+        self.output_widget.setPlainText("")
