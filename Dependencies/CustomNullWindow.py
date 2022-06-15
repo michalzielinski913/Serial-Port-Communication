@@ -30,5 +30,4 @@ class CustomNullWindow(object):
     def _close_window(self):
         self.app.terminator=self.lineEdit.text()
         self.app.terminator=r"{}".format(self.app.terminator)
-        print(repr(self.app.terminator.replace(r"\\", "\\")))
         self.window.close()

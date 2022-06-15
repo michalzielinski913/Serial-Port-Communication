@@ -186,12 +186,7 @@ class App(QObject):
             self.terminator="\r\n"
         if self.actionCustom.isChecked():
             self._open_custom_null_window()
-        print(self.terminator.encode())
-    def connect_test(self):
-        print("test")
 
-    def set_output(self, string):
-        self.output_widget.setPlainText("test")
 
     def send_to_serial(self):
         if self.serial is not None:
