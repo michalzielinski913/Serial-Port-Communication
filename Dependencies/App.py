@@ -24,6 +24,7 @@ class App(QObject):
         import sys
         self.app=QtWidgets.QApplication(sys.argv)
         self.MainWindow = QtWidgets.QMainWindow()
+        self.MainWindow.setWindowIcon(QtGui.QIcon('aei.ico'))
         self.terminator = "\r\n"
         self._main_window_set_up(self.MainWindow)
         self.MainWindow.show()
@@ -33,7 +34,9 @@ class App(QObject):
 
 
     def _main_window_set_up(self, MainWindow):
-        MainWindow.setObjectName("MainWindow")
+
+
+        MainWindow.setObjectName("COM Port")
         MainWindow.resize(600, 800)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
@@ -115,7 +118,7 @@ class App(QObject):
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
+        MainWindow.setWindowTitle(_translate("MainWindow", "COM Port"))
         self.label.setText(_translate("MainWindow", "Output:"))
         self.label_2.setText(_translate("MainWindow", "Input:"))
         self.send_button.setText(_translate("MainWindow", "Send"))
@@ -254,7 +257,8 @@ class App(QObject):
             timestamp=datetime.now()
             self.time_label.setText("Waiting")
             self.time_label.repaint()
-            self.serial.write("Test msg".encode())
+            msg="TestMSG{}".format(self.terminator)
+            self.serial.write(msg.encode())
 
             while self.serial.in_waiting==0:
                 pass

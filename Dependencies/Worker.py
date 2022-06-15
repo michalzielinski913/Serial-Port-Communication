@@ -14,8 +14,9 @@ class Worker(QObject):
     def run(self):
         """Long-running task."""
         while True:
-                result=self.serial.read()
-                self.progress.emit(result.decode())
+                result=self.serial.read(1)
+                if result:
+                    self.progress.emit(result.decode())
 
 
         self.finished.emit()
